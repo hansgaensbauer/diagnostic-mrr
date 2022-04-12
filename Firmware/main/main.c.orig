@@ -12,7 +12,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "nmr.h"
+#include "mrr.h"
 
 volatile int pulse_count; //count up to numpulses
 

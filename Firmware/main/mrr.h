@@ -1,7 +1,7 @@
 
 
-#ifndef NMR_H_
-#define NMR_H_
+#ifndef MRR_H_
+#define MRR_H_
 
 #define F_CPU 20000000UL
 
@@ -12,4 +12,4 @@
 
 #define NUMPULSES 2000
 
-#endif //NMR_H_
+#endif //MRR_H_
