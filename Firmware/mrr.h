@@ -1,3 +1,8 @@
+<<<<<<< HEAD:Firmware/mrr.h
+=======
+
+
+>>>>>>> 6df317b06061e21d558287ed8567bc83c080b4a0:Firmware/main/nmr.h
 #ifndef MRR_H_
 #define MRR_H_
 
