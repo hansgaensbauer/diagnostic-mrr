@@ -99,3 +99,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#VIM Swap File
+*.swp
