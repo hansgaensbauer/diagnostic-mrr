@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "MRR")(type "KiCad")(uri "${MRR}/MRR.kicad_sym")(options "")(descr ""))
+)
