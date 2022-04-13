@@ -33,7 +33,7 @@ volatile uint8_t trig_ready_flag = 0;
 int main(void) {
 
     //Connect coil to transmiter
-    DDRD |= 0b00010001;
+    DDRD |= 0b00011001;
     PORTD = 0b00010000;
 
     TCCR1A = 0b00100011; //Fast PWM, TOP=OCR1A, non inverting for OC1B
@@ -45,28 +45,30 @@ int main(void) {
 
     //Set up the inter-pulse spacing
     OCR1A = ((PULSETRAIN_DELAY) * (F_CPU / 1000000UL)); //20 cycles/μs * PULSE_SPACINGμs
-    
+
+    OCR1B = (pulsewidths[0] * (F_CPU / 1000000UL)); //Set up first pulse
 
     for(uint8_t i = 0; i < NUM_PW; i++){
-        
+
+        PORTD ^= 0b00001000;
+
         trig_ready_flag = 0;
         echo_ready_flag = 0;
 
-	TCCR1A = 0b00100011; 
+        TCCR1A = 0b00100011; //Fast PWM, TOP=OCR1A, non inverting for OC1B
+        TCCR1B = 0b00011001; //Fast PWM, TOP=OCR1A, CS12:0 = CLK_IO/1. Turn on timer
+        
+        //Immediately switch to pulse spacing and 180 degree pulsewidth
+        while(!echo_ready_flag); //wait until we're ready to trigger
+        OCR1B = ((pulsewidths[i] * 2) * (F_CPU / 1000000UL)); //180 degree pulse, 20 cycles/μs * 2 * pw_90μs
 
-	//Set up the 90 degree pulse
-	echo_ready_flag = 0;
-	uint8_t pw_90 = pulsewidths[i];
-        OCR1B = ((pw_90) * (F_CPU / 1000000UL)); //90 degree pulse, 20 cycles/μs * 2 * pw_90μs
-    
-	TCCR1B = 0b00011001; //Fast PWM, TOP=OCR1A, CS12:0 = CLK_IO/1. Turn on timer
-    
-	//Immediately switch to pulse spacing and 180 degree pulsewidth
-        OCR1B = ((pw_90 * 2) * (F_CPU / 1000000UL)); //180 degree pulse, 20 cycles/μs * 2 * pw_90μs
+        while(!trig_ready_flag); //wait until we're ready to trigger
+        PORTD ^= 0b00001000;
+        if(i < NUM_PW - 1){ //still another pulse to go
+            OCR1B = (pulsewidths[i + 1] * (F_CPU / 1000000UL)); //Set up the next 90 degree pulse
+        }
 
-	_delay_ms(1000); //wait one second between repeated trials
-
-	PORTD &= ~0b00000001; //clear the trigger signal
+        _delay_ms(1000); //wait one second between repeated trials
     }
 
     cli(); //turn off all interrupts
@@ -78,26 +80,28 @@ int main(void) {
 //Timer 1 Compare B Match Interrupt
 //Execute Every time we switch off the RF pulse
 ISR(TIMER1_COMPB_vect) {
-    PORTD = 0;
+    PORTD &= ~0b00010000;
     if(echo_ready_flag){
-	PORTB &= ~0b00000100; //make sure PB2 stays low
-	TCCR1A = 0b00000011; //disconnect OC1B
-	trig_ready_flag = 1;
-	echo_ready_flag = 0;
+        trig_ready_flag = 1;
+        echo_ready_flag = 0;
+        PORTB &= ~0b00000100; //make sure PB2 stays low
+        TCCR1A = 0b00000011; //disconnect OC1B
     } else {
         echo_ready_flag = 1;
+        if(trig_ready_flag){
+            TCCR1B = 0b00011000; //Turn off the timer
+            trig_ready_flag = 0;
+        }
     }
+    
 }
 
-//Timer 1 Compare A Match Interrupt
+//Timer 1 Compare A Match Interrupt (On TOP/clear)
 //Execute Every time we switch on the RF coil
 ISR(TIMER1_COMPA_vect) {
     if(trig_ready_flag){
-	PORTD |= 0b00000001;
-        TCCR1B = 0b00011000; //Turn off the timer
-	TCNT1 = 0; //Clear the timer
-	trig_ready_flag = 0;
+        PORTD = 0b00000001; //No RF switch, but turn on trigger
     } else{
-        PORTD |= 0b00010000;
+        PORTD = 0b00010000; //turn on the RF switch, turn off the trigger
     }
 }
