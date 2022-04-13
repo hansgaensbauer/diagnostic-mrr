@@ -9,3 +9,5 @@ This tool attempts to significantly lower the cost of an instrument capable of d
 4. Implementing the receiver with tuned filters and peak detect circuits
 
 ## New Hardware
+These PCBs have been ordered, manufactured, and shipped. They will make testing and calibration much more controlled and repeatable. 
+![New PCB](https://github.com/hansgaensbauer/diagnostic-mrr/blob/main/images/new-hardware.png?raw=true)
